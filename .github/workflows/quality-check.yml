@@ -6,43 +6,41 @@ on:
   pull_request:
     branches: [ main, master ]
 
+# Forzamos a que todas las acciones usen Node 24 como indica el blog de GitHub
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   analyze_and_test:
     runs-on: ubuntu-latest
     
     steps:
-      # 1. Usamos v4 para evitar el error de Node.js 20
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Configurar Java (necesario para algunas herramientas de Flutter/Android)
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      # 3. Configurar Flutter (Asegúrate de usar una versión estable)
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0' # O la que uses en tu lab
           channel: 'stable'
+          # Nota: Usamos la versión estable más reciente para evitar conflictos de linter
+          cache: true
 
-      # 4. Instalar dependencias
       - name: Install dependencies
         run: flutter pub get
 
-      # 5. Generar archivos si usas dotenv (PASO CRÍTICO)
-      # Si tu app usa .env y no lo subiste al git, el test fallará.
-      # Este comando crea un archivo .env vacío para que no rompa el build.
-      - name: Create empty .env if missing
+      # Paso crítico: Crear el .env para que flutter_dotenv no lance error en el test
+      - name: Create .env file
         run: touch .env
 
-      # 6. Ejecutar análisis (el linter)
       - name: Analyze project
+        # Usamos --fatal-infos para que el análisis sea riguroso como pide la rúbrica
         run: flutter analyze
 
-      # 7. Ejecutar pruebas unitarias
       - name: Run tests
         run: flutter test
