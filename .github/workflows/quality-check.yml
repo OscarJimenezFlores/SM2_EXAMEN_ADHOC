@@ -1,39 +1,48 @@
-name: Quality Check
+name: Flutter Quality Check
 
 on:
   push:
-    branches: [main]
+    branches: [ main, master ]
   pull_request:
-    branches: [main]
+    branches: [ main, master ]
 
 jobs:
   analyze_and_test:
     runs-on: ubuntu-latest
-
+    
     steps:
+      # 1. Usamos v4 para evitar el error de Node.js 20
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Environment
+      # 2. Configurar Java (necesario para algunas herramientas de Flutter/Android)
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # 3. Configurar Flutter (Asegúrate de usar una versión estable)
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0' # Versión solicitada en el examen
-          channel: stable
-          cache: true
+          flutter-version: '3.22.0' # O la que uses en tu lab
+          channel: 'stable'
 
-      # Paso crítico: Crea un archivo .env vacío para que Flutter no falle al buscarlo como asset
-      - name: Create empty .env file
-        run: echo "" > .env
-
+      # 4. Instalar dependencias
       - name: Install dependencies
         run: flutter pub get
 
-      # Necesario para generar archivos de modelos o mocks si usas build_runner
-      - name: Generate code (build_runner)
-        run: flutter pub run build_runner build --delete-conflicting-outputs
+      # 5. Generar archivos si usas dotenv (PASO CRÍTICO)
+      # Si tu app usa .env y no lo subiste al git, el test fallará.
+      # Este comando crea un archivo .env vacío para que no rompa el build.
+      - name: Create empty .env if missing
+        run: touch .env
 
-      - name: Analyze Code
+      # 6. Ejecutar análisis (el linter)
+      - name: Analyze project
         run: flutter analyze
 
-      - name: Run Unit Tests
+      # 7. Ejecutar pruebas unitarias
+      - name: Run tests
         run: flutter test
