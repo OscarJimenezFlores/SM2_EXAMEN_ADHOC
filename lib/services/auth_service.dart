@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:proyecto_moviles2/model/usuario_model.dart';
+import 'dart:developer' as developer;
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -44,9 +45,10 @@ class AuthService {
       // 4. Obtener y devolver el usuario completo
       return await _getUserFromFirestore(userCredential.user!.uid);
     } on FirebaseAuthException catch (e) {
-      print('Error al iniciar sesión: ${e.message}');
-      return null;
-    }
+  // CORRECCIÓN: Usamos developer.log en lugar de print
+  developer.log('Error al iniciar sesión', error: e.message, name: 'auth.service');
+  return null;
+}
   }
 
   // Registrar nuevo usuario
@@ -99,9 +101,10 @@ class AuthService {
 
       return nuevoUsuario;
     } on FirebaseAuthException catch (e) {
-      print('Error al registrar: ${e.message}');
-      return null;
-    }
+  // CORRECCIÓN: Usamos developer.log en lugar de print
+  developer.log('Error al registrar', error: e.message, name: 'auth.service');
+  return null;
+}
   }
 
   // Cerrar sesión

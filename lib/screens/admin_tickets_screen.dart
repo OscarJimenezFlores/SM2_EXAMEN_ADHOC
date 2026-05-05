@@ -11,7 +11,8 @@ class AdminTicketsScreen extends StatefulWidget {
   const AdminTicketsScreen({super.key});
 
   @override
-  _AdminTicketsScreenState createState() => _AdminTicketsScreenState();
+
+  State<AdminTicketsScreen> createState() => _AdminTicketsScreenState();
 }
 
 class _AdminTicketsScreenState extends State<AdminTicketsScreen> {
@@ -96,7 +97,8 @@ class _AdminTicketsScreenState extends State<AdminTicketsScreen> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  // Cambio: de .withOpacity(0.05) a .withValues(alpha: 0.05)
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -114,7 +116,7 @@ class _AdminTicketsScreenState extends State<AdminTicketsScreen> {
                     // Dropdown para estados
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: _filterStatus,
+                        initialValue: _filterStatus,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                           border: OutlineInputBorder(
@@ -301,7 +303,8 @@ class _AdminTicketsScreenState extends State<AdminTicketsScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: _getStatusColor(ticket.estado).withOpacity(0.1),
+                              // Cambio: de .withOpacity(0.1) a .withValues(alpha: 0.1)
+                              color: _getStatusColor(ticket.estado).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -378,12 +381,20 @@ class _AdminTicketsScreenState extends State<AdminTicketsScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () async {
-              await TicketService().eliminarTicket(ticket.id);
-              if (context.mounted) Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Ticket eliminado correctamente')),
-              );
-            },
+            // 1. Ejecutamos la acción asíncrona
+            await TicketService().eliminarTicket(ticket.id);
+            
+            // 2. Verificamos si el contexto sigue siendo válido antes de cualquier acción de UI
+            if (!context.mounted) return;
+
+            // 3. Cerramos el diálogo
+            Navigator.pop(context);
+
+            // 4. Mostramos el mensaje de confirmación
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Ticket eliminado correctamente')),
+            );
+          },
             child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
           ),
         ],

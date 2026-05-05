@@ -7,7 +7,8 @@ class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  _RegisterScreenState createState() => _RegisterScreenState();
+  // CORRECCIÓN: Usamos el tipo genérico State<RegisterScreen>
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
@@ -71,13 +72,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
             'rol': 'usuario',
           });
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
+      // CORRECCIÓN: Guardia de seguridad antes de interactuar con la UI
+      if (!mounted) return;
+
+      // Mostramos el mensaje de éxito
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Registro exitoso. Por favor inicia sesión.')),
       );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Registro exitoso. Por favor inicia sesión.')),
+      // Navegamos al Login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
     } on FirebaseAuthException catch (e) {
       setState(() {

@@ -8,7 +8,8 @@ class AdminTicketDetailScreen extends StatefulWidget {
   const AdminTicketDetailScreen({super.key, required this.ticket});
 
   @override
-  _AdminTicketDetailScreenState createState() =>
+  // Cambio: Se usa State<AdminTicketDetailScreen> en lugar del nombre de la clase privada
+  State<AdminTicketDetailScreen> createState() => 
       _AdminTicketDetailScreenState();
 }
 
@@ -50,7 +51,12 @@ class _AdminTicketDetailScreenState extends State<AdminTicketDetailScreen> {
       fechaActualizacion: DateTime.now(),
     );
 
+    // Operación asíncrona
     await _ticketService.actualizarTicket(actualizado);
+    
+    // Protección: Si el widget ya no está en pantalla, no ejecutamos lo que sigue
+    if (!mounted) return; 
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Ticket actualizado correctamente')),
     );
@@ -65,8 +71,15 @@ class _AdminTicketDetailScreenState extends State<AdminTicketDetailScreen> {
         contenido: _mensajeController.text.trim(),
         esAdmin: true,
       );
+      
+      // Protección: Necesaria antes de usar el controlador o cualquier elemento del State
+      if (!mounted) return; 
+      
       _mensajeController.clear();
     } catch (e) {
+      // Protección: Necesaria antes de mostrar el error en el SnackBar
+      if (!mounted) return; 
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al enviar: $e')),
       );
@@ -235,7 +248,7 @@ class _AdminTicketDetailScreenState extends State<AdminTicketDetailScreen> {
 
   Widget _buildDropdown({required String label, required String value, required List<String> items, required Function(String?) onChanged}) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
         labelText: label,
         filled: true,

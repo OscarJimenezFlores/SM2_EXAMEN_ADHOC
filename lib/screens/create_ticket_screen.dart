@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // para acceder a la key
+import 'dart:developer' as developer; // Cambio: Para usar log en lugar de print
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:proyecto_moviles2/services/ticket_service.dart';
 
 class CreateTicketScreen extends StatefulWidget {
   const CreateTicketScreen({super.key});
 
   @override
-  _CreateTicketScreenState createState() => _CreateTicketScreenState();
+  // Corrección 1: Se usa State<CreateTicketScreen> en lugar del tipo privado
+  State<CreateTicketScreen> createState() => _CreateTicketScreenState();
 }
 
 class _CreateTicketScreenState extends State<CreateTicketScreen> {
@@ -26,10 +28,17 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
 
   final Color primaryColor = const Color(0xFF3B5998);
 
+  // Liberar controladores para evitar fugas de memoria
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Evita que el teclado "aplaste" el diseño y cause errores de píxeles
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         automaticallyImplyLeading: true,
@@ -41,7 +50,6 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
         backgroundColor: primaryColor,
       ),
       backgroundColor: const Color(0xFFF5F7FA),
-      // Permite cerrar el teclado al tocar cualquier área vacía de la pantalla
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: SingleChildScrollView(
@@ -85,7 +93,6 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Sección de Prioridad detectada por IA
                 if (_priorityDetermined) ...[
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -98,9 +105,10 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black12,
+                          // Corrección 2: withValues en lugar de withOpacity
+                          color: Colors.black.withValues(alpha: 0.12),
                           blurRadius: 4,
-                          offset: Offset(0, 2),
+                          offset: const Offset(0, 2),
                         )
                       ],
                     ),
@@ -142,7 +150,8 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
 
                 DropdownButtonFormField<String>(
                   isExpanded: true,
-                  value: _category,
+                  // Corrección 3: Se usa initialValue en lugar de value en versiones nuevas de Flutter
+                  initialValue: _category,
                   items: _buildCategoryItems(),
                   onChanged: (value) => setState(() => _category = value!),
                   decoration: const InputDecoration(
@@ -160,7 +169,6 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                 else
                   Column(
                     children: [
-                      // Botón de Análisis (Naranja)
                       if (!_priorityDetermined)
                         ElevatedButton.icon(
                           onPressed: _analyzePriority,
@@ -182,7 +190,6 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                       
                       const SizedBox(height: 12),
 
-                      // Botón de Envío (Azul) - Se activa solo tras analizar
                       if (_priorityDetermined)
                         ElevatedButton.icon(
                           onPressed: _canCreateTicket ? _submitTicket : null,
@@ -202,7 +209,6 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                           ),
                         ),
                       
-                      // Espacio extra al final para que el teclado no cubra los botones
                       const SizedBox(height: 20),
                     ],
                   ),
@@ -263,6 +269,9 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
         _descriptionController.text.trim(),
       );
 
+      // Corrección 4: mounted check antes del setState tras await
+      if (!mounted) return;
+
       setState(() {
         _priority = result['priority']!;
         _recommendation = result['recommendation'];
@@ -270,6 +279,8 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
         _canCreateTicket = true;
       });
     } catch (e) {
+      // Corrección 5: mounted check antes del SnackBar
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al analizar prioridad: $e'),
@@ -277,20 +288,16 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
         ),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Color _getPriorityColor(String priority) {
     switch (priority) {
-      case 'alta':
-        return Colors.red;
-      case 'media':
-        return Colors.orange;
-      case 'baja':
-        return Colors.green;
-      default:
-        return Colors.grey;
+      case 'alta': return Colors.red;
+      case 'media': return Colors.orange;
+      case 'baja': return Colors.green;
+      default: return Colors.grey;
     }
   }
 
@@ -305,59 +312,61 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
         categoria: _category,
       );
 
+      // Corrección 6: mounted check antes del SnackBar
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Ticket creado con prioridad ${_priority.toUpperCase()}!',
-          ),
+          content: Text('Ticket creado con prioridad ${_priority.toUpperCase()}!'),
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.pop(context);
+      // Corrección 7: mounted check antes del Navigator.pop
+      if (mounted) Navigator.pop(context);
+
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<Map<String, String>> _determinePriorityWithAI(String description) async {
-  final apiKey = dotenv.env['HUGGINGFACE_API_KEY'] ?? '';
-  
-  // URL alternativa (Prueba sin el prefijo /models/ si el 404 persiste)
-  final String modelUrl = 'https://api-inference.huggingface.co/models/facebook/bart-large-mnli';
+    final apiKey = dotenv.env['HUGGINGFACE_API_KEY'] ?? '';
+    const String modelUrl = 'https://api-inference.huggingface.co/models/facebook/bart-large-mnli';
 
-  try {
-    final response = await http.post(
-      Uri.parse(modelUrl),
-      headers: {
-        'Authorization': 'Bearer $apiKey',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        "inputs": description,
-        "parameters": {"candidate_labels": ["urgente", "normal", "no urgente"]},
-      }),
-    ).timeout(const Duration(seconds: 10));
+    try {
+      final response = await http.post(
+        Uri.parse(modelUrl),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          "inputs": description,
+          "parameters": {"candidate_labels": ["urgente", "normal", "no urgente"]},
+        }),
+      ).timeout(const Duration(seconds: 10));
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> decoded = jsonDecode(response.body);
-      final String topLabel = decoded['labels'][0];
-      return {
-        'priority': topLabel == 'urgente' ? 'alta' : (topLabel == 'normal' ? 'media' : 'baja'),
-        'recommendation': 'Prioridad analizada por IA'
-      };
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> decoded = jsonDecode(response.body);
+        final String topLabel = decoded['labels'][0];
+        return {
+          'priority': topLabel == 'urgente' ? 'alta' : (topLabel == 'normal' ? 'media' : 'baja'),
+          'recommendation': 'Prioridad analizada por IA'
+        };
+      }
+      
+      // Corrección 8: Uso de log en lugar de print
+      developer.log("La IA falló con código ${response.statusCode}, usando prioridad por defecto.");
+      return {'priority': 'media', 'recommendation': 'Prioridad asignada automáticamente (IA no disponible)'};
+
+    } catch (e) {
+      developer.log("Error de conexión: $e. Usando prioridad por defecto.");
+      return {'priority': 'media', 'recommendation': 'Revisión manual requerida'};
     }
-    
-    // SI HAY ERROR 404 U OTRO, NO LANCES EXCEPCIÓN, DEVUELVE ALGO POR DEFECTO
-    print("La IA falló con código ${response.statusCode}, usando prioridad por defecto.");
-    return {'priority': 'media', 'recommendation': 'Prioridad asignada automáticamente (IA no disponible)'};
-
-  } catch (e) {
-    print("Error de conexión: $e. Usando prioridad por defecto.");
-    return {'priority': 'media', 'recommendation': 'Revisión manual requerida'};
   }
-}
 }

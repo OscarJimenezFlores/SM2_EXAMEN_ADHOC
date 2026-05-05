@@ -198,26 +198,33 @@ class AdminUsersScreen extends StatelessWidget {
                       child: const Text('Cancelar'),
                     ),
                     ElevatedButton(
-                      child: const Text('Guardar'),
-                      onPressed: () async {
-                        final actualizado = Usuario(
-                          id: usuario.id,
-                          username: usernameController.text.trim(),
-                          email: usuario.email,
-                          nombreCompleto: nombreController.text.trim(),
-                          fechaCreacion: usuario.fechaCreacion,
-                          ultimoLogin: usuario.ultimoLogin,
-                          emailVerificado: usuario.emailVerificado,
-                          rol: rolSeleccionado,
-                        );
+  child: const Text('Guardar'),
+  onPressed: () async {
+    final actualizado = Usuario(
+      id: usuario.id,
+      username: usernameController.text.trim(),
+      email: usuario.email,
+      nombreCompleto: nombreController.text.trim(),
+      fechaCreacion: usuario.fechaCreacion,
+      ultimoLogin: usuario.ultimoLogin,
+      emailVerificado: usuario.emailVerificado,
+      rol: rolSeleccionado,
+    );
 
-                        await _usuarioService.actualizarUsuario(actualizado);
-                        Navigator.pop(context);
-                        usernameController.dispose();
-                        nombreController.dispose();
-                        emailController.dispose();
-                      },
-                    ),
+    // 1. Ejecutamos la actualización
+    await _usuarioService.actualizarUsuario(actualizado);
+
+    // 2. Verificamos si el diálogo sigue montado antes de usar el context
+    if (!context.mounted) return;
+
+    // 3. Cerramos el diálogo y liberamos recursos
+    Navigator.pop(context);
+    
+    usernameController.dispose();
+    nombreController.dispose();
+    emailController.dispose();
+  },
+),
                   ],
                 ),
           ),

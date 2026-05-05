@@ -202,15 +202,19 @@ class _HomeScreenState extends State<HomeScreen> {
     return Card(
       elevation: 8,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      shadowColor: color.withOpacity(0.4),
+      // Corrección 1: Actualización de opacidad en la sombra
+      shadowColor: color.withValues(alpha: 0.4),
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(20),
-        splashColor: color.withOpacity(0.2),
-        highlightColor: color.withOpacity(0.1),
+        // Corrección 2: Actualización de opacidad en el efecto splash
+        splashColor: color.withValues(alpha: 0.2),
+        // Corrección 3: Actualización de opacidad en el resaltado
+        highlightColor: color.withValues(alpha: 0.1),
         child: Container(
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            // Corrección 4: Actualización de opacidad en el fondo del contenedor
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 12),
@@ -228,11 +232,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.grey[900],
                 ),
               ),
-            ], // Cierre correcto de children
-          ), // Cierre correcto de Column
-        ), // Cierre correcto de Container
-      ), // Cierre correcto de InkWell
-    ); // Cierre correcto de Card
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showSearchDialog(BuildContext context) {

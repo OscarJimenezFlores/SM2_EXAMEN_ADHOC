@@ -6,7 +6,6 @@ import 'package:proyecto_moviles2/services/ticket_service.dart';
 import 'package:proyecto_moviles2/screens/create_ticket_screen.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:permission_handler/permission_handler.dart';
 import 'package:open_filex/open_filex.dart'; // No olvides instalarlo
 import 'package:proyecto_moviles2/screens/ticket_detail_screen.dart';
 import 'package:path_provider/path_provider.dart';
@@ -222,27 +221,8 @@ class _ViewTicketsScreenState extends State<ViewTicketsScreen> {
     }
   }
 
-  Widget _buildStatusIndicator(String status) {
-    final color = _getStatusColor(status);
-    return Container(
-      width: 12,
-      height: 12,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
-  }
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'pendiente':
-        return Colors.orange;
-      case 'en proceso':
-        return Colors.blue;
-      case 'resuelto':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
-  }
+
 
   String _capitalize(String text) {
     if (text.isEmpty) return text;
@@ -347,14 +327,15 @@ class _ViewTicketsScreenState extends State<ViewTicketsScreen> {
   try {
     final bytes = await pdf.save();
 
-    // ✅ CAMBIO CLAVE: Usamos path_provider para obtener una ruta segura y privada
     final dir = await getApplicationDocumentsDirectory();
     final filePath = '${dir.path}/ticket_${ticket.id}.pdf';
-    
+
     final file = File(filePath);
     await file.writeAsBytes(bytes);
 
-    // Notificamos al usuario
+    // ✅ VALIDACIÓN CLAVE antes de usar context
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('PDF generado con éxito'),
@@ -362,10 +343,12 @@ class _ViewTicketsScreenState extends State<ViewTicketsScreen> {
       ),
     );
 
-    // ✅ Abrimos el archivo inmediatamente con open_filex
     await OpenFilex.open(filePath);
 
   } catch (e) {
+    // ✅ VALIDACIÓN TAMBIÉN EN EL CATCH
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Error al generar o abrir el PDF: $e'),

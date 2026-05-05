@@ -113,7 +113,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _rolSeleccionado,
+                initialValue: _rolSeleccionado,
                 decoration: InputDecoration(
                   labelText: 'Rol',
                   border: OutlineInputBorder(

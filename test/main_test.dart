@@ -2,74 +2,84 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:proyecto_moviles2/model/ticket_model.dart';
 import 'package:proyecto_moviles2/model/usuario_model.dart';
 
+
 void main() {
-  //  Prueba 1: Validar Ticket incompleto (simulación de validación lógica)
-  test('Ticket con título vacío debería ser inválido', () {
-    final ticket = Ticket(
-      id: '1',
-      titulo: '',
-      descripcion: 'Descripción',
-      estado: 'pendiente',
-      userId: 'u1',
-      usuarioNombre: 'Helbert',
-      fechaCreacion: DateTime.now(),
-      fechaActualizacion: DateTime.now(),
-      prioridad: 'alta',
-      categoria: 'general',
-    );
+  group('Pruebas Unitarias - Sistema de Tickets MDP', () {
+    
+    // Prueba 1: Validación de Integridad de Datos (Título)
+    test('Validación: Un ticket sin título debe ser detectado como inválido', () {
+      final ticket = Ticket(
+        id: 'test-001',
+        titulo: '', // Título vacío
+        descripcion: 'Falla en el sistema de red',
+        estado: 'pendiente',
+        userId: 'admin-01',
+        usuarioNombre: 'Ricardo Admin',
+        fechaCreacion: DateTime.now(),
+        fechaActualizacion: DateTime.now(),
+        prioridad: 'alta',
+        categoria: 'redes',
+      );
 
-    final esValido = ticket.titulo.trim().isNotEmpty;
-    expect(esValido, false);
-  });
+      // Lógica: El título no debe estar vacío después de quitar espacios
+      final esValido = ticket.titulo.trim().isNotEmpty;
+      
+      expect(esValido, isFalse, reason: 'El sistema no debería permitir títulos vacíos');
+    });
 
-  //  Prueba 2: Ticket cambia correctamente de estado y actualiza fecha
-  test('Actualizar estado de ticket debería cambiar estado y fecha', () {
-    final original = Ticket(
-      id: 't1',
-      titulo: 'Error en login',
-      descripcion: 'Pantalla negra',
-      estado: 'pendiente',
-      userId: 'u2',
-      usuarioNombre: 'Luis',
-      fechaCreacion: DateTime.now().subtract(const Duration(days: 2)),
-      fechaActualizacion: DateTime.now().subtract(const Duration(days: 1)),
-      prioridad: 'media',
-      categoria: 'sistema',
-    );
+    // Prueba 2: Lógica de Negocio (Cambio de Estado)
+    test('Lógica: El cambio de estado debe reflejar una actualización cronológica', () {
+      final fechaInicial = DateTime.now().subtract(const Duration(hours: 5));
+      
+      final ticketOriginal = Ticket(
+        id: 't-100',
+        titulo: 'Soporte Técnico',
+        descripcion: 'Mantenimiento preventivo',
+        estado: 'pendiente',
+        userId: 'u-50',
+        usuarioNombre: 'Usuario Test',
+        fechaCreacion: fechaInicial,
+        fechaActualizacion: fechaInicial,
+        prioridad: 'media',
+        categoria: 'hardware',
+      );
 
-    final actualizado = Ticket(
-      id: original.id,
-      titulo: original.titulo,
-      descripcion: original.descripcion,
-      estado: 'cerrado',
-      userId: original.userId,
-      usuarioNombre: original.usuarioNombre,
-      fechaCreacion: original.fechaCreacion,
-      fechaActualizacion: DateTime.now(),
-      prioridad: original.prioridad,
-      categoria: original.categoria,
-    );
+      // Simulamos la actualización del ticket
+      final fechaNueva = DateTime.now();
+      final ticketActualizado = Ticket(
+        id: ticketOriginal.id,
+        titulo: ticketOriginal.titulo,
+        descripcion: ticketOriginal.descripcion,
+        estado: 'en progreso',
+        userId: ticketOriginal.userId,
+        usuarioNombre: ticketOriginal.usuarioNombre,
+        fechaCreacion: ticketOriginal.fechaCreacion,
+        fechaActualizacion: fechaNueva,
+        prioridad: ticketOriginal.prioridad,
+        categoria: ticketOriginal.categoria,
+      );
 
-    expect(actualizado.estado, isNot(equals(original.estado)));
-    expect(actualizado.fechaActualizacion.isAfter(original.fechaActualizacion), true);
-  });
+      expect(ticketActualizado.estado, equals('en progreso'));
+      expect(ticketActualizado.fechaActualizacion.isAfter(ticketOriginal.fechaActualizacion), isTrue);
+    });
 
-  // Prueba 3: Validación de email en modelo Usuario
-  test('Usuario con email inválido no debe pasar validación', () {
-    final usuario = Usuario(
-      id: 'u1',
-      username: 'userx',
-      email: 'correo-no-valido',
-      nombreCompleto: 'Helbert CL',
-      fechaCreacion: DateTime.now(),
-      ultimoLogin: null,
-      emailVerificado: false,
-      rol: 'usuario',
-    );
+    // Prueba 3: Validación de Formato (Email de Usuario)
+    test('Seguridad: El formato de email del usuario debe ser válido', () {
+      final usuario = Usuario(
+        id: 'usr-99',
+        username: 'ricardo_dev',
+        email: 'correo_invalido_at_dominio.com', // Formato incorrecto
+        nombreCompleto: 'Ricardo Estudiante',
+        fechaCreacion: DateTime.now(),
+        ultimoLogin: null,
+        emailVerificado: false,
+        rol: 'usuario',
+      );
 
-    final emailEsValido = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$')
-        .hasMatch(usuario.email);
+      final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+      final esEmailValido = emailRegExp.hasMatch(usuario.email);
 
-    expect(emailEsValido, false);
+      expect(esEmailValido, isFalse, reason: 'El formato de email proporcionado es incorrecto');
+    });
   });
 }

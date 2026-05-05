@@ -44,8 +44,11 @@ class DashboardWidget extends StatelessWidget {
   Widget _buildCard(String label, int count, int total, Color color) {
     final double porcentaje = total > 0 ? count / total : 0;
 
-    return Container(
-      width: 150, // Definimos un ancho para que el Wrap se vea ordenado
+    // Corrección 1: Añadimos 'const' al SizedBox si el ancho es fijo 
+    // o simplemente usamos un decorador más limpio. 
+    // El linter suele preferir que el contenedor sea const si sus hijos lo permiten.
+    return SizedBox(
+      width: 150, 
       child: Card(
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -61,7 +64,8 @@ class DashboardWidget extends StatelessWidget {
               const SizedBox(height: 8),
               LinearProgressIndicator(
                 value: porcentaje,
-                backgroundColor: color.withOpacity(0.1),
+                // Corrección 2: Reemplazamos withOpacity por withValues
+                backgroundColor: color.withValues(alpha: 0.1),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
                 minHeight: 6,
               ),

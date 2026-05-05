@@ -1,0 +1,39 @@
+name: Quality Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  analyze_and_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Environment
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0' # Versión solicitada en el examen
+          channel: stable
+          cache: true
+
+      # Paso crítico: Crea un archivo .env vacío para que Flutter no falle al buscarlo como asset
+      - name: Create empty .env file
+        run: echo "" > .env
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Necesario para generar archivos de modelos o mocks si usas build_runner
+      - name: Generate code (build_runner)
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+
+      - name: Analyze Code
+        run: flutter analyze
+
+      - name: Run Unit Tests
+        run: flutter test

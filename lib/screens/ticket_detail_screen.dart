@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_moviles2/model/ticket_model.dart';
 import 'package:proyecto_moviles2/services/ticket_service.dart';
-import 'package:intl/intl.dart';
+
 
 class TicketDetailScreen extends StatefulWidget {
   final Ticket ticket;
